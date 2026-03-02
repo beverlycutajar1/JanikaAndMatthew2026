@@ -111,6 +111,7 @@
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transform: scaleX(-1);
   }
 
   #canvas { display: none; }
@@ -532,9 +533,6 @@ shutterBtn.addEventListener('click', () => {
   canvas.width = w; canvas.height = h;
   const ctx = canvas.getContext('2d');
   // Mirror front camera
-  if (facingMode === 'user') {
-    ctx.translate(w, 0); ctx.scale(-1, 1);
-  }
   ctx.drawImage(video, 0, 0, w, h);
   canvas.toBlob(blob => {
     capturedBlob = blob;
