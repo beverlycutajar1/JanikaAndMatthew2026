@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>Capture the Moment</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&family=DM+Sans:wght@300;400&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cream: #faf8f5;
+    --ink: #1a1814;
+    --stone: #8a857c;
+    --line: #e4e0da;
+    --accent: #c9a96e;
+    --success: #4a7c59;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 48px 20px 60px;
+  }
+
+  /* ── Header ── */
+  header {
+    text-align: center;
+    margin-bottom: 48px;
+    animation: fadeUp 0.8s ease both;
+  }
+
+  .date-line {
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--stone);
+    margin-bottom: 16px;
+  }
+
+  h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: clamp(2.2rem, 6vw, 3.2rem);
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .subtitle {
+    margin-top: 14px;
+    font-size: 13.5px;
+    color: var(--stone);
+    line-height: 1.7;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .divider {
+    width: 40px;
+    height: 1px;
+    background: var(--accent);
+    margin: 20px auto 0;
+  }
+
+  /* ── Card ── */
+  .card {
+    width: 100%;
+    max-width: 420px;
+    animation: fadeUp 0.8s 0.1s ease both;
+  }
+
+  /* ── Steps ── */
+  .step {
+    display: none;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .step.active { display: flex; }
+
+  /* ── Camera ── */
+  .camera-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3/4;
+    background: var(--ink);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  #video, #canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  #canvas { display: none; }
+
+  .camera-overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .corner {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    border-color: rgba(255,255,255,0.6);
+    border-style: solid;
+    border-width: 0;
+  }
+  .corner.tl { top: 16px; left: 16px; border-top-width: 1.5px; border-left-width: 1.5px; }
+  .corner.tr { top: 16px; right: 16px; border-top-width: 1.5px; border-right-width: 1.5px; }
+  .corner.bl { bottom: 16px; left: 16px; border-bottom-width: 1.5px; border-left-width: 1.5px; }
+  .corner.br { bottom: 16px; right: 16px; border-bottom-width: 1.5px; border-right-width: 1.5px; }
+
+  .camera-status {
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.5);
+    white-space: nowrap;
+  }
+
+  /* ── Preview ── */
+  .preview-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 3/4;
+    border-radius: 4px;
+    overflow: hidden;
+    background: var(--ink);
+  }
+
+  #preview-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .retake-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(0,0,0,0.55);
+    color: #fff;
+    border: none;
+    border-radius: 2px;
+    padding: 6px 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+  }
+
+  /* ── Form fields ── */
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+  }
+
+  label {
+    font-size: 10.5px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--stone);
+  }
+
+  input, textarea {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--line);
+    padding: 8px 0;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 15px;
+    font-weight: 300;
+    color: var(--ink);
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s;
+    resize: none;
+  }
+
+  input::placeholder, textarea::placeholder { color: var(--line); }
+
+  input:focus, textarea:focus { border-color: var(--accent); }
+
+  textarea { min-height: 60px; line-height: 1.6; }
+
+  /* ── Buttons ── */
+  .btn-primary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 15px;
+    background: var(--ink);
+    color: var(--cream);
+    border: none;
+    border-radius: 2px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11.5px;
+    font-weight: 400;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s, opacity 0.2s;
+  }
+
+  .btn-primary:hover { background: #2d2a25; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-ghost {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 13px;
+    background: transparent;
+    color: var(--stone);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11.5px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  .btn-ghost:hover { border-color: var(--stone); color: var(--ink); }
+
+  /* ── Shutter ── */
+  .shutter-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 4px 0;
+  }
+
+  .shutter {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 2px solid var(--ink);
+    background: transparent;
+    cursor: pointer;
+    position: relative;
+    transition: transform 0.15s;
+  }
+
+  .shutter::after {
+    content: '';
+    position: absolute;
+    inset: 5px;
+    border-radius: 50%;
+    background: var(--ink);
+    transition: background 0.15s;
+  }
+
+  .shutter:hover { transform: scale(1.05); }
+  .shutter:active { transform: scale(0.95); }
+  .shutter:active::after { background: var(--accent); }
+
+  /* ── Progress ── */
+  .progress-bar {
+    height: 2px;
+    background: var(--line);
+    border-radius: 1px;
+    overflow: hidden;
+    margin-bottom: 4px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+
+  .progress-label {
+    font-size: 11px;
+    color: var(--stone);
+    letter-spacing: 0.1em;
+    text-align: center;
+  }
+
+  /* ── Success ── */
+  .success-screen {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 20px;
+    padding: 20px 0 40px;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .success-screen.active { display: flex; }
+
+  .checkmark {
+    width: 64px;
+    height: 64px;
+    border: 1.5px solid var(--accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+    font-size: 26px;
+  }
+
+  .success-screen h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: 1.9rem;
+  }
+
+  .success-screen p {
+    font-size: 13.5px;
+    color: var(--stone);
+    line-height: 1.7;
+    max-width: 280px;
+  }
+
+  /* ── Config notice ── */
+  .config-notice {
+    background: #fff8e7;
+    border: 1px solid #f0dba0;
+    border-radius: 4px;
+    padding: 14px 16px;
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: #7a6020;
+    margin-bottom: 8px;
+  }
+
+  .config-notice strong { font-weight: 600; }
+  .config-notice code {
+    background: rgba(0,0,0,0.07);
+    padding: 1px 5px;
+    border-radius: 2px;
+    font-family: monospace;
+    font-size: 11.5px;
+  }
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Flip camera ── */
+  .flip-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: rgba(0,0,0,0.45);
+    border: none;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: white;
+    font-size: 16px;
+    backdrop-filter: blur(4px);
+    z-index: 2;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <p class="date-line">October 24, 2026 &nbsp;·&nbsp; Malta</p>
+  <h1>Share a<br/><em>moment</em> with us</h1>
+  <p class="subtitle">Take a selfie and leave us a memory to keep forever.</p>
+  <div class="divider"></div>
+</header>
+
+<div class="card">
+
+  <!-- ── Step 1: Camera ── -->
+  <div class="step active" id="step-camera">
+    <div class="camera-wrap">
+      <video id="video" autoplay playsinline muted></video>
+      <canvas id="canvas"></canvas>
+      <div class="camera-overlay">
+        <div class="corner tl"></div>
+        <div class="corner tr"></div>
+        <div class="corner bl"></div>
+        <div class="corner br"></div>
+      </div>
+      <button class="flip-btn" id="flipBtn" title="Flip camera">⟳</button>
+      <p class="camera-status" id="cameraStatus">Starting camera…</p>
+    </div>
+    <div class="shutter-wrap">
+      <button class="shutter" id="shutterBtn" title="Take photo" disabled></button>
+    </div>
+  </div>
+
+  <!-- ── Step 2: Preview + Form ── -->
+  <div class="step" id="step-preview">
+    <div class="preview-wrap">
+      <img id="preview-img" src="" alt="Your photo" />
+      <button class="retake-btn" id="retakeBtn">Retake</button>
+    </div>
+    <div class="field">
+      <label for="guestName">Your name</label>
+      <input type="text" id="guestName" placeholder="e.g. Maria & João" maxlength="60" />
+    </div>
+    <div class="field">
+      <label for="guestMsg">Leave a wish <span style="color:var(--line)">(optional)</span></label>
+      <textarea id="guestMsg" placeholder="Wishing you both a lifetime of joy…" maxlength="200"></textarea>
+    </div>
+    <button class="btn-primary" id="uploadBtn">
+      <span>Send my photo</span>
+    </button>
+  </div>
+
+  <!-- ── Step 3: Uploading ── -->
+  <div class="step" id="step-uploading">
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <p class="progress-label" id="progressLabel">Uploading…</p>
+  </div>
+
+  <!-- ── Success ── -->
+  <div class="success-screen" id="successScreen">
+    <div class="checkmark">✓</div>
+    <h2>Thank you!</h2>
+    <p>Your photo has been saved. Enjoy the celebration! 🥂</p>
+    <button class="btn-ghost" id="anotherBtn">Take another photo</button>
+  </div>
+
+</div>
+
+<script>
+// ══════════════════════════════════════════════════
+//  CONFIGURATION — edit these two values
+// ══════════════════════════════════════════════════
+const CLOUDINARY_CLOUD_NAME  = 'JanikaWedding2026';    // e.g. 'mywedding2025'
+const CLOUDINARY_UPLOAD_PRESET = 'ml_default'; // unsigned preset name
+// ══════════════════════════════════════════════════
+
+const video       = document.getElementById('video');
+const canvas      = document.getElementById('canvas');
+const shutterBtn  = document.getElementById('shutterBtn');
+const flipBtn     = document.getElementById('flipBtn');
+const cameraStatus = document.getElementById('cameraStatus');
+const retakeBtn   = document.getElementById('retakeBtn');
+const previewImg  = document.getElementById('preview-img');
+const uploadBtn   = document.getElementById('uploadBtn');
+const progressFill = document.getElementById('progressFill');
+const progressLabel = document.getElementById('progressLabel');
+const anotherBtn  = document.getElementById('anotherBtn');
+
+let stream = null;
+let facingMode = 'user'; // front camera by default
+let capturedBlob = null;
+
+// ── Steps ──
+function showStep(id) {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('successScreen').classList.remove('active');
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+}
+
+function showSuccess() {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  document.getElementById('successScreen').classList.add('active');
+}
+
+// ── Camera ──
+async function startCamera() {
+  if (stream) { stream.getTracks().forEach(t => t.stop()); }
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode, width: { ideal: 1080 }, height: { ideal: 1440 } },
+      audio: false
+    });
+    video.srcObject = stream;
+    video.style.display = 'block';
+    cameraStatus.textContent = 'Ready';
+    shutterBtn.disabled = false;
+  } catch (err) {
+    cameraStatus.textContent = 'Camera unavailable';
+    console.error(err);
+  }
+}
+
+flipBtn.addEventListener('click', () => {
+  facingMode = facingMode === 'user' ? 'environment' : 'user';
+  startCamera();
+});
+
+shutterBtn.addEventListener('click', () => {
+  const w = video.videoWidth, h = video.videoHeight;
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  // Mirror front camera
+  if (facingMode === 'user') {
+    ctx.translate(w, 0); ctx.scale(-1, 1);
+  }
+  ctx.drawImage(video, 0, 0, w, h);
+  canvas.toBlob(blob => {
+    capturedBlob = blob;
+    const url = URL.createObjectURL(blob);
+    previewImg.src = url;
+    showStep('step-preview');
+    if (stream) stream.getTracks().forEach(t => t.stop());
+  }, 'image/jpeg', 0.92);
+});
+
+retakeBtn.addEventListener('click', () => {
+  showStep('step-camera');
+  startCamera();
+});
+
+// ── Upload ──
+uploadBtn.addEventListener('click', async () => {
+  const name = document.getElementById('guestName').value.trim() || 'Anonymous';
+  const msg  = document.getElementById('guestMsg').value.trim();
+
+  if (CLOUDINARY_CLOUD_NAME === 'YOUR_CLOUD_NAME') {
+    alert('Please configure your Cloudinary credentials in the script first!');
+    return;
+  }
+
+  showStep('step-uploading');
+  setProgress(10, 'Preparing…');
+
+  const formData = new FormData();
+  const filename = `wedding_${Date.now()}_${name.replace(/[^a-z0-9]/gi, '_')}.jpg`;
+  formData.append('file', capturedBlob, filename);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  formData.append('folder', 'wedding_guests');
+  formData.append('context', `guest_name=${name}|message=${msg}`);
+  formData.append('tags', 'wedding,guest_selfie');
+
+  try {
+    setProgress(30, 'Uploading…');
+    const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`, {
+      method: 'POST',
+      body: formData
+    });
+
+    setProgress(85, 'Saving…');
+
+    if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+    await res.json();
+    setProgress(100, 'Done!');
+    setTimeout(showSuccess, 500);
+
+  } catch (err) {
+    console.error(err);
+    showStep('step-preview');
+    alert('Upload failed. Please try again or check your internet connection.');
+  }
+});
+
+anotherBtn.addEventListener('click', () => {
+  document.getElementById('guestName').value = '';
+  document.getElementById('guestMsg').value = '';
+  capturedBlob = null;
+  showStep('step-camera');
+  startCamera();
+});
+
+function setProgress(pct, label) {
+  progressFill.style.width = pct + '%';
+  progressLabel.textContent = label;
+}
+
+// ── Init ──
+startCamera();
+</script>
+
+<!--
+════════════════════════════════════════════════════════
+  SETUP GUIDE — 5 minutes to go live
+════════════════════════════════════════════════════════
+
+1. CREATE A FREE CLOUDINARY ACCOUNT
+   → https://cloudinary.com/users/register/free
+
+2. CREATE AN UNSIGNED UPLOAD PRESET
+   → Dashboard → Settings → Upload → Upload Presets → Add preset
+   → Signing mode: Unsigned
+   → Folder: wedding_guests
+   → Copy the preset name
+
+3. GET YOUR CLOUD NAME
+   → Dashboard top-left: "Cloud Name: xxxxxx"
+
+4. EDIT THIS FILE
+   → Replace YOUR_CLOUD_NAME  with your cloud name
+   → Replace YOUR_UPLOAD_PRESET with your preset name
+   → Update the date & names in the <header> section
+
+5. HOST THE FILE (free options)
+   → GitHub Pages: push to repo → Settings → Pages → Deploy from main
+   → Netlify Drop: drag this file to app.netlify.com/drop
+   → Vercel: similar drag-and-drop
+
+6. GENERATE QR CODE
+   → Go to qr-code-generator.com
+   → Paste your hosted URL
+   → Download and print!
+
+7. VIEW PHOTOS AFTER THE WEDDING
+   → Cloudinary Dashboard → Media Library → wedding_guests folder
+   → Select All → Download as ZIP
+
+SECURITY NOTES:
+   • The unsigned preset limits uploads to your folder only
+   • Add "Max file size: 10MB" and "Allowed formats: jpg,png,webp"
+     in the preset settings for extra protection
+   • Optionally enable "Notification URL" to get email alerts per upload
+
+════════════════════════════════════════════════════════
+-->
+</body>
+</html>
